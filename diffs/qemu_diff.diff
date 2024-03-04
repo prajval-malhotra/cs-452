@@ -1,0 +1,100 @@
+diff --git a/Makefile b/Makefile
+index 6e9cbce..8738ccf 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,4 +1,4 @@
+-XDIR:=/u/cs452/public/xdev
++XDIR:=/path/to/aarch64-none-elf
+ ARCH=cortex-a72
+ TRIPLE=aarch64-none-elf
+ XBINDIR:=$(XDIR)/bin
+diff --git a/include/constants.h b/include/constants.h
+index eafddcc..5feb6c4 100644
+--- a/include/constants.h
++++ b/include/constants.h
+@@ -1,6 +1,6 @@
+ #ifndef _constants_h_
+ #define _constants_h_ 1
+ 
+-static char* const  MMIO_BASE = (char*)0xFE000000;
++static char* const  MMIO_BASE = (char*)0x3F000000;
+ 
+-#endif
+\ No newline at end of file
++#endif
+diff --git a/src/boot.S b/src/boot.S
+index f5f00c0..5ad13eb 100644
+--- a/src/boot.S
++++ b/src/boot.S
+@@ -87,8 +87,8 @@ program_startup:
+     // use watchdog to reboot
+     mov x2, 36
+     mov x0, 28
+-    movk  x2, 0xfe10, lsl 16
+-    movk  x0, 0xfe10, lsl 16
++    movk  x2, 0x3f10, lsl 16
++    movk  x0, 0x3f10, lsl 16
+     mov w3, 1
+     mov w1, 32
+     movk  w3, 0x5a00, lsl 16
+diff --git a/src/rpi.cc b/src/rpi.cc
+index 74d310c..cad82e7 100644
+--- a/src/rpi.cc
++++ b/src/rpi.cc
+@@ -8,10 +8,7 @@
+ 
+ static char* const GPIO_BASE = (char*)(MMIO_BASE + 0x200000);
+ static const uint32_t GPFSEL_OFFSETS[6] = {0x00, 0x04, 0x08, 0x0c, 0x10, 0x14};
+-static const uint32_t GPIO_PUP_PDN_CNTRL_OFFSETS[4] = {0xe4, 0xe8, 0xec, 0xf0};
+-
+ #define GPFSEL_REG(reg) (*(uint32_t*)(GPIO_BASE + GPFSEL_OFFSETS[reg]))
+-#define GPIO_PUP_PDN_CNTRL_REG(reg) (*(uint32_t*)(GPIO_BASE + GPIO_PUP_PDN_CNTRL_OFFSETS[reg]))
+ 
+ // function control settings for GPIO pins
+ static const uint32_t GPIO_INPUT  = 0x00;
+@@ -23,25 +20,13 @@ static const uint32_t GPIO_ALTFN3 = 0x07;
+ static const uint32_t GPIO_ALTFN4 = 0x03;
+ static const uint32_t GPIO_ALTFN5 = 0x02;
+ 
+-// pup/pdn resistor settings for GPIO pins
+-static const uint32_t GPIO_NONE = 0x00;
+-static const uint32_t GPIO_PUP  = 0x01;
+-static const uint32_t GPIO_PDP  = 0x02;
+-
+-static void setup_gpio(uint32_t pin, uint32_t setting, uint32_t resistor) {
++static void setup_gpio(uint32_t pin, uint32_t setting) {
+   uint32_t reg   =  pin / 10;
+   uint32_t shift = (pin % 10) * 3;
+   uint32_t status = GPFSEL_REG(reg);   // read status
+   status &= ~(7u << shift);              // clear bits
+   status |=  (setting << shift);         // set bits
+   GPFSEL_REG(reg) = status;
+-
+-  reg   =  pin / 16;
+-  shift = (pin % 16) * 2;
+-  status = GPIO_PUP_PDN_CNTRL_REG(reg); // read status
+-  status &= ~(3u << shift);              // clear bits
+-  status |=  (resistor << shift);        // set bits
+-  GPIO_PUP_PDN_CNTRL_REG(reg) = status; // write back
+ }
+ 
+ /*********** UART CONTROL ************************ ************/
+@@ -92,12 +77,12 @@ static const uint32_t UART_LCRH_WLEN_HIGH = 0x40;
+ // For UART3 (line 2 on the RPi hat), we need to configure the GPIO to route
+ // the uart control and data signals to the GPIO pins expected by the hat.
+ void gpio_init() {
+-  setup_gpio(4, GPIO_ALTFN4, GPIO_NONE);
+-  setup_gpio(5, GPIO_ALTFN4, GPIO_NONE);
+-  setup_gpio(6, GPIO_ALTFN4, GPIO_NONE);
+-  setup_gpio(7, GPIO_ALTFN4, GPIO_NONE);
+-  setup_gpio(14, GPIO_ALTFN0, GPIO_NONE);
+-  setup_gpio(15, GPIO_ALTFN0, GPIO_NONE);
++  setup_gpio(4, GPIO_ALTFN4);
++  setup_gpio(5, GPIO_ALTFN4);
++  setup_gpio(6, GPIO_ALTFN4);
++  setup_gpio(7, GPIO_ALTFN4);
++  setup_gpio(14, GPIO_ALTFN0);
++  setup_gpio(15, GPIO_ALTFN0);
+ }
+ 
+ // Configure the line properties (e.g, parity, baud rate) of a UART and ensure that it is enabled

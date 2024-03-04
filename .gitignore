@@ -1,0 +1,6 @@
+*.d
+*.o
+build/
+temp/
+kernel.elf
+kernel.img

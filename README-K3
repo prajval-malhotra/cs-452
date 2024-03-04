@@ -1,0 +1,30 @@
+Building
+========================================
+
+git clone ist-git@git.uwaterloo.ca:p6malhot/cs-452.git
+cd cs-452
+make
+
+make will generate kernel.img, which can be uploaded to the Raspberry Pi.
+
+Interacting
+========================================
+
+Upon boot, the kernel will display output text from the user tasks, and the total idle time in the top right.
+
+cs-452/
+│
+├── include/
+│   └── *.h
+│
+├── src/
+│   └── *.c
+│
+├── build/   
+│   └── *.o, *.d
+│   
+├── kernel.img
+├── kernel.elf
+├── linker.ld
+│   
+├── Makefile
